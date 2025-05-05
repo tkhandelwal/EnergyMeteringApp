@@ -8,6 +8,6 @@ namespace EnergyMeteringApp.Models
         public double EnergyValue { get; set; } // kWh
         public double Power { get; set; } // kW
         public int ClassificationId { get; set; }
-        public Classification Classification { get; set; }
+        public Classification Classification { get; set; } = null!;
     }
 }

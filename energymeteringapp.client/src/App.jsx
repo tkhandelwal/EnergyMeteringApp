@@ -1,10 +1,13 @@
+// src/App.jsx (updated)
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { Container, Nav, Navbar } from "react-bootstrap";
+import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
 import Dashboard from "./components/Dashboard";
 import ClassificationManager from "./components/ClassificationManager";
 import DataGenerator from "./components/DataGenerator";
 import Reports from "./components/Reports";
+import EnPIManager from "./components/EnPIManager";
+import EnergyFlowAnalysis from "./components/EnergyFlowAnalysis";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -21,7 +24,12 @@ function App() {
                                 <Nav.Link as={Link} to="/">Dashboard</Nav.Link>
                                 <Nav.Link as={Link} to="/classifications">Classifications</Nav.Link>
                                 <Nav.Link as={Link} to="/generator">Data Generator</Nav.Link>
-                                <Nav.Link as={Link} to="/reports">Reports</Nav.Link>
+                                <NavDropdown title="Analytics" id="analytics-dropdown">
+                                    <NavDropdown.Item as={Link} to="/reports">Standard Reports</NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/enpi">EnPI Manager</NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/energy-flow">Energy Flow Analysis</NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/pareto">Pareto Analysis</NavDropdown.Item>
+                                </NavDropdown>
                             </Nav>
                         </Navbar.Collapse>
                     </Container>
@@ -33,6 +41,9 @@ function App() {
                         <Route path="/classifications" element={<ClassificationManager />} />
                         <Route path="/generator" element={<DataGenerator />} />
                         <Route path="/reports" element={<Reports />} />
+                        <Route path="/enpi" element={<EnPIManager />} />
+                        <Route path="/energy-flow" element={<EnergyFlowAnalysis />} />
+                        <Route path="/pareto" element={<ParetoAnalysis />} />
                     </Routes>
                 </Container>
             </div>

@@ -1,14 +1,11 @@
-﻿// components/DataTable.js
+﻿// Fixed DataTable.jsx component
 import React from 'react';
 import {
     useReactTable,
     getCoreRowModel,
     getSortedRowModel,
-    flexRender,
-    createColumnHelper
+    flexRender
 } from '@tanstack/react-table';
-
-const columnHelper = createColumnHelper();
 
 const DataTable = ({ data, columns }) => {
     const table = useReactTable({
@@ -43,7 +40,7 @@ const DataTable = ({ data, columns }) => {
                         </tr>
                     ))}
                 </thead>
-                <body>
+                <tbody>
                     {table.getRowModel().rows.map(row => (
                         <tr key={row.id}>
                             {row.getVisibleCells().map(cell => (
@@ -53,7 +50,7 @@ const DataTable = ({ data, columns }) => {
                             ))}
                         </tr>
                     ))}
-                </body>
+                </tbody>
             </table>
         </div>
     );

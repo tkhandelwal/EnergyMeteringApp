@@ -186,7 +186,7 @@ const Reports = () => {
             .sort((a, b) => b[1] - a[1]);
 
         // Calculate cumulative percentages
-        const totalEnergy = sortedData.reduce((sum, [_, value]) => sum + value, 0);
+        const totalEnergy = sortedData.reduce((sum, [, value]) => sum + value, 0);
         let cumulativeSum = 0;
 
         const paretoData = sortedData.map(([name, value]) => {

@@ -55,17 +55,17 @@ export default defineConfig({
         }
     },
     server: {
-        port: parseInt(env.DEV_SERVER_PORT || '53991'),
+        port: 53992, // This matches your current Vite port
         https: {
             key: fs.readFileSync(keyFilePath),
             cert: fs.readFileSync(certFilePath),
         },
         proxy: {
-            '^/api': {
-                target,
+            '/api': {
+                target: 'https://localhost:7177', // Point to your ASP.NET Core HTTPS port
                 changeOrigin: true,
-                secure: false,
-            },
-        },
-    },
+                secure: false // Disable SSL verification for development
+            }
+        }
+    }
 });
