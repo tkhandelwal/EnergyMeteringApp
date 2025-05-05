@@ -8,6 +8,8 @@ import DataGenerator from "./components/DataGenerator";
 import Reports from "./components/Reports";
 import EnPIManager from "./components/EnPIManager";
 import EnergyFlowAnalysis from "./components/EnergyFlowAnalysis";
+import ParetoAnalysis from "./components/ParetoAnalysis";
+import SystemStatus from "./components/SystemStatus";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
@@ -44,6 +46,7 @@ function App() {
                         <Route path="/enpi" element={<EnPIManager />} />
                         <Route path="/energy-flow" element={<EnergyFlowAnalysis />} />
                         <Route path="/pareto" element={<ParetoAnalysis />} />
+                        <Route path="/system-status" element={<SystemStatus />} />
                     </Routes>
                 </Container>
             </div>

@@ -4,8 +4,20 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using EnergyMeteringApp.Data;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (!Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "wwwroot")))
+{
+    Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot"));
+}
+
+builder.Services.Configure<StaticFileOptions>(options =>
+{
+    options.FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot"));
+});
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -22,20 +34,14 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
         policy => {
-            var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-            if (allowedOrigins != null && allowedOrigins.Length > 0)
-            {
-                policy.WithOrigins(allowedOrigins);
-            }
-            else
-            {
-                // Default fallback if configuration is missing
-                policy.WithOrigins("https://localhost:5001", "http://localhost:3000", "https://localhost:53992");
-                // Added your Vite server URL -------------------------^
-            }
-            policy.AllowAnyMethod()
-                 .AllowAnyHeader()
-                 .AllowCredentials();
+            policy.WithOrigins(
+                    "https://localhost:53992", // Vite development server
+                    "http://localhost:53992",   // Also allow HTTP for Vite
+                    "http://localhost:5255",
+                    "https://localhost:7177")
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
         });
 });
 

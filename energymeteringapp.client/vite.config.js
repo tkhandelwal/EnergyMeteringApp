@@ -55,16 +55,34 @@ export default defineConfig({
         }
     },
     server: {
-        port: 53992, // This matches your current Vite port
+        port: 53992,
         https: {
             key: fs.readFileSync(keyFilePath),
             cert: fs.readFileSync(certFilePath),
         },
+        hmr: {
+            // This is crucial for fixing WebSocket issues
+            protocol: 'ws',
+            host: 'localhost',
+            port: 53992
+        },
         proxy: {
             '/api': {
-                target: 'https://localhost:7177', // Point to your ASP.NET Core HTTPS port
+                target: 'https://localhost:7177',
                 changeOrigin: true,
-                secure: false // Disable SSL verification for development
+                secure: false,
+                // Add timeout configuration
+                configure: (proxy, _options) => {
+                    proxy.on('error', (err, _req, _res) => {
+                        console.log('proxy error', err);
+                    });
+                    proxy.on('proxyReq', (proxyReq, req, _res) => {
+                        console.log('Sending Request:', req.method, req.url);
+                    });
+                    proxy.on('proxyRes', (proxyRes, req, _res) => {
+                        console.log('Received Response from:', req.url, proxyRes.statusCode);
+                    });
+                }
             }
         }
     }
