@@ -37,8 +37,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsPolicy",
         policy => {
             policy.WithOrigins(
-                    "https://localhost:53992", // Vite development server
-                    "http://localhost:53992",   // Also allow HTTP for Vite
+                    "https://localhost:53992",
+                    "http://localhost:53992",
                     "http://localhost:5255",
                     "https://localhost:7177")
                   .AllowAnyMethod()

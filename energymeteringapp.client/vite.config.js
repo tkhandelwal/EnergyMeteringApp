@@ -40,12 +40,6 @@ if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
     }
 }
 
-const target = env.ASPNETCORE_HTTPS_PORT
-    ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
-    : env.ASPNETCORE_URLS
-        ? env.ASPNETCORE_URLS.split(';')[0]
-        : 'https://localhost:5255';
-
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [plugin()],
@@ -62,7 +56,7 @@ export default defineConfig({
         },
         hmr: {
             // This is crucial for fixing WebSocket issues
-            protocol: 'ws',
+            protocol: 'wss',
             host: 'localhost',
             port: 53992
         },
@@ -72,15 +66,9 @@ export default defineConfig({
                 changeOrigin: true,
                 secure: false,
                 // Add timeout configuration
-                configure: (proxy, _options) => {
-                    proxy.on('error', (err, _req, _res) => {
+                configure: (proxy) => {
+                    proxy.on('error', (err) => {
                         console.log('proxy error', err);
-                    });
-                    proxy.on('proxyReq', (proxyReq, req, _res) => {
-                        console.log('Sending Request:', req.method, req.url);
-                    });
-                    proxy.on('proxyRes', (proxyRes, req, _res) => {
-                        console.log('Received Response from:', req.url, proxyRes.statusCode);
                     });
                 }
             }

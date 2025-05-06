@@ -1,4 +1,4 @@
-// src/components/SystemStatus.jsx
+// Updated SystemStatus.jsx
 import React, { useState, useEffect } from 'react';
 import { Card, ListGroup, Badge, Button, Alert, Spinner } from 'react-bootstrap';
 import apiService from '../services/apiService';
@@ -22,10 +22,10 @@ const SystemStatus = () => {
             try {
                 const healthCheck = await apiService.checkHealth();
                 result.backend = healthCheck;
-            } catch (error) {
+            } catch {
                 result.backend = {
                     status: 'error',
-                    message: `Backend API error: ${error.message || 'Unknown error'}`
+                    message: 'Backend API error: Unable to connect'
                 };
             }
 
@@ -39,7 +39,7 @@ const SystemStatus = () => {
                         `Found ${count} classifications` :
                         'No classifications found'
                 };
-            } catch (error) {
+            } catch {
                 result.classifications = {
                     status: 'error',
                     message: 'Failed to fetch classifications'
@@ -54,7 +54,7 @@ const SystemStatus = () => {
                     status: 'ok',
                     message: `Found ${count} metering data points`
                 };
-            } catch (error) {
+            } catch {
                 result.meteringData = {
                     status: 'error',
                     message: 'Failed to fetch metering data'
@@ -62,9 +62,9 @@ const SystemStatus = () => {
             }
 
             setStatuses(result);
-        } catch (error) {
-            console.error('Error checking system status:', error);
-            setError('Failed to check system status: ' + (error.message || 'Unknown error'));
+        } catch {
+            console.error('Error checking system status');
+            setError('Failed to check system status');
         } finally {
             setLoading(false);
         }
@@ -89,6 +89,7 @@ const SystemStatus = () => {
 
     const createDefaultClassifications = async () => {
         setLoading(true);
+        setError(null);
         try {
             // Default classifications
             const defaults = [
@@ -104,10 +105,9 @@ const SystemStatus = () => {
 
             // Refresh status
             await checkBackend();
-            setError(null);
-        } catch (error) {
-            console.error('Error creating default classifications:', error);
-            setError('Failed to create default classifications: ' + (error.message || 'Unknown error'));
+        } catch (err) {
+            console.error('Error creating default classifications:', err);
+            setError('Failed to create default classifications: ' + (err.message || 'Unknown error'));
         } finally {
             setLoading(false);
         }
@@ -115,11 +115,13 @@ const SystemStatus = () => {
 
     const generateSampleData = async () => {
         setLoading(true);
+        setError(null);
         try {
             // Check if we have classifications
             const classifications = await apiService.getClassifications();
             if (!Array.isArray(classifications) || classifications.length === 0) {
                 setError('Please create classifications first before generating data');
+                setLoading(false);
                 return;
             }
 
@@ -139,10 +141,9 @@ const SystemStatus = () => {
 
             // Refresh status
             await checkBackend();
-            setError(null);
-        } catch (error) {
-            console.error('Error generating sample data:', error);
-            setError('Failed to generate sample data: ' + (error.message || 'Unknown error'));
+        } catch (err) {
+            console.error('Error generating sample data:', err);
+            setError('Failed to generate sample data: ' + (err.message || 'Unknown error'));
         } finally {
             setLoading(false);
         }

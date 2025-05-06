@@ -1,8 +1,9 @@
-﻿// Controllers/MeteringDataController.cs
+﻿// Updated MeteringDataController.cs
 using EnergyMeteringApp.Data;
 using EnergyMeteringApp.Models;
 using EnergyMeteringApp.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;

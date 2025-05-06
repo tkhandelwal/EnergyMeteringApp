@@ -8,7 +8,7 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <SpaRoot>..\energymeteringapp.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>https://localhost:53991</SpaProxyServerUrl>
+    <SpaProxyServerUrl>https://localhost:53992</SpaProxyServerUrl>
   </PropertyGroup>
 
   <ItemGroup>

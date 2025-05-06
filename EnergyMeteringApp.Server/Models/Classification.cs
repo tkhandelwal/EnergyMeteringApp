@@ -1,6 +1,7 @@
 ﻿// Models/Classification.cs
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 namespace EnergyMeteringApp.Models
 {
@@ -8,13 +9,25 @@ namespace EnergyMeteringApp.Models
     {
         public int Id { get; set; }
 
-        // Fix 1: Add required modifier to enforce non-null values
-        public required string Name { get; set; }
+        [Required]
+        public string Name { get; set; } = null!;
 
-        // Fix 2: Add required modifier to enforce non-null values
-        public required string Type { get; set; } // Equipment, Facility, ProductionLine, Organization, etc.
+        [Required]
+        public string Type { get; set; } = null!; // Equipment, Facility, ProductionLine, etc.
+
+        [Required]
+        public string EnergyType { get; set; } = "Electricity"; // Electricity, Gas, Water, etc.
+
+        [Required]
+        public string MeasurementUnit { get; set; } = "kWh"; // kWh, m³, etc.
 
         [JsonIgnore]
         public List<MeteringData> MeteringData { get; set; } = new List<MeteringData>();
+
+        [JsonIgnore]
+        public List<EnPIDefinition> EnPIDefinitions { get; set; } = new List<EnPIDefinition>();
+
+        [JsonIgnore]
+        public List<Baseline> Baselines { get; set; } = new List<Baseline>();
     }
 }
