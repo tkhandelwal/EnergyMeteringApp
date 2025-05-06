@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EnergyMeteringApp.Data
 {
+    // Update in EnergyMeteringApp.Server/Data/ApplicationDbContext.cs
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -14,6 +15,9 @@ namespace EnergyMeteringApp.Data
         public DbSet<Classification> Classifications { get; set; }
         public DbSet<MeteringData> MeteringData { get; set; }
         public DbSet<EnPI> EnPIs { get; set; }
+        public DbSet<EnPIDefinition> EnPIDefinitions { get; set; } // Added
+        public DbSet<Target> Targets { get; set; } // Added
+        public DbSet<Baseline> Baselines { get; set; } // Added
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,6 +34,24 @@ namespace EnergyMeteringApp.Data
                 .HasOne(e => e.Classification)
                 .WithMany()
                 .HasForeignKey(e => e.ClassificationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<EnPIDefinition>()
+                .HasOne(e => e.Classification)
+                .WithMany(c => c.EnPIDefinitions)
+                .HasForeignKey(e => e.ClassificationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Target>()
+                .HasOne(t => t.EnPIDefinition)
+                .WithMany(e => e.Targets)
+                .HasForeignKey(t => t.EnPIDefinitionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Baseline>()
+                .HasOne(b => b.Classification)
+                .WithMany(c => c.Baselines)
+                .HasForeignKey(b => b.ClassificationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Add seed data if needed

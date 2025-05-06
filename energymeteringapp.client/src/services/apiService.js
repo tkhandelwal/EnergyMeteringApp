@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Configuration with environment-aware base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7177';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5255';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -14,7 +14,7 @@ const api = axios.create({
 
 // Create a fallback API for when the main API fails
 const fallbackApi = axios.create({
-    baseURL: 'https://localhost:7177', // Use HTTPS instead of HTTP
+    baseURL: 'http://localhost:5255',
     timeout: 5000,
     headers: {
         'Content-Type': 'application/json'

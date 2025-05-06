@@ -1,4 +1,4 @@
-// src/components/wizard/ClassificationSetup.jsx
+// New file: energymeteringapp.client/src/components/wizard/ClassificationSetup.jsx
 import React, { useState } from 'react';
 import { Form, Button, Table, Row, Col, Alert } from 'react-bootstrap';
 
@@ -6,61 +6,25 @@ const ClassificationSetup = ({ onData, data }) => {
     const [classifications, setClassifications] = useState(data || []);
     const [newClassification, setNewClassification] = useState({
         name: '',
-        type: 'Facility',
-        energyType: 'Electricity', // New field
-        measurementUnit: 'kWh'     // New field
+        type: 'Equipment',
+        energyType: 'Electricity',
+        measurementUnit: 'kWh'
     });
-
-    const energyTypes = [
-        { value: 'Electricity', label: 'Electricity', defaultUnit: 'kWh' },
-        { value: 'Gas', label: 'Natural Gas', defaultUnit: 'm³' },
-        { value: 'Water', label: 'Water', defaultUnit: 'm³' },
-        { value: 'Steam', label: 'Steam', defaultUnit: 'kg' },
-        { value: 'HVAC', label: 'HVAC', defaultUnit: 'BTU' },
-        { value: 'Other', label: 'Other', defaultUnit: '' }
-    ];
-
-    const unitsByEnergyType = {
-        'Electricity': ['kWh', 'MWh', 'kW', 'MW'],
-        'Gas': ['m³', 'ft³', 'therms'],
-        'Water': ['m³', 'gallons', 'liters'],
-        'Steam': ['kg', 'lb', 'ton'],
-        'HVAC': ['BTU', 'kWh', 'ton of refrigeration'],
-        'Other': ['kWh', 'm³', 'kg', 'custom']
-    };
-
-    const classificationTypes = [
-        'Facility',
-        'Equipment',
-        'Production Line',
-        'Department',
-        'Process',
-        'Building',
-        'Area'
-    ];
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-
-        if (name === 'energyType') {
-            // When energy type changes, update the default unit
-            const selectedEnergyType = energyTypes.find(type => type.value === value);
-            setNewClassification({
-                ...newClassification,
-                [name]: value,
-                measurementUnit: selectedEnergyType?.defaultUnit || ''
-            });
-        } else {
-            setNewClassification({
-                ...newClassification,
-                [name]: value
-            });
-        }
+        setNewClassification({
+            ...newClassification,
+            [name]: value
+        });
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!newClassification.name.trim()) return;
+
+        if (!newClassification.name || !newClassification.type) {
+            return;
+        }
 
         const updatedClassifications = [...classifications, { ...newClassification, id: Date.now() }];
         setClassifications(updatedClassifications);
@@ -69,7 +33,7 @@ const ClassificationSetup = ({ onData, data }) => {
         // Reset form
         setNewClassification({
             name: '',
-            type: 'Facility',
+            type: 'Equipment',
             energyType: 'Electricity',
             measurementUnit: 'kWh'
         });
@@ -81,31 +45,68 @@ const ClassificationSetup = ({ onData, data }) => {
         onData(updatedClassifications);
     };
 
+    const classificationTypes = [
+        { value: 'Equipment', label: 'Equipment' },
+        { value: 'Facility', label: 'Facility' },
+        { value: 'ProductionLine', label: 'Production Line' },
+        { value: 'Organization', label: 'Organization' }
+    ];
+
+    const energyTypes = [
+        { value: 'Electricity', label: 'Electricity' },
+        { value: 'Gas', label: 'Natural Gas' },
+        { value: 'Water', label: 'Water' },
+        { value: 'Steam', label: 'Steam' },
+        { value: 'Compressed Air', label: 'Compressed Air' }
+    ];
+
+    const measurementUnits = {
+        'Electricity': [
+            { value: 'kWh', label: 'kilowatt-hour (kWh)' },
+            { value: 'MWh', label: 'megawatt-hour (MWh)' }
+        ],
+        'Gas': [
+            { value: 'm³', label: 'cubic meter (m³)' },
+            { value: 'BTU', label: 'British Thermal Unit (BTU)' }
+        ],
+        'Water': [
+            { value: 'm³', label: 'cubic meter (m³)' },
+            { value: 'gal', label: 'gallon (gal)' }
+        ],
+        'Steam': [
+            { value: 'kg', label: 'kilogram (kg)' },
+            { value: 'lb', label: 'pound (lb)' }
+        ],
+        'Compressed Air': [
+            { value: 'm³', label: 'cubic meter (m³)' },
+            { value: 'cf', label: 'cubic feet (cf)' }
+        ]
+    };
+
     return (
         <div>
-            <h4>Step 1: Define Energy Classifications</h4>
+            <h4>Step 1: Define Classifications</h4>
             <p>
-                Start by defining the classifications for your energy systems.
-                These represent the different areas, equipment, or processes that consume energy.
-                For ISO 50001 compliance, specify the energy type and measurement unit for each classification.
+                Create classifications for energy metering points within your organization.
+                Examples include facilities, equipment, production lines, etc.
             </p>
 
             <Form onSubmit={handleSubmit}>
                 <Row>
-                    <Col md={3}>
+                    <Col md={6}>
                         <Form.Group className="mb-3">
-                            <Form.Label>Classification Name</Form.Label>
+                            <Form.Label>Name</Form.Label>
                             <Form.Control
                                 type="text"
                                 name="name"
                                 value={newClassification.name}
                                 onChange={handleChange}
-                                placeholder="e.g., Main Building, Server Room"
+                                placeholder="e.g., Server Room, Production Line A"
                                 required
                             />
                         </Form.Group>
                     </Col>
-                    <Col md={3}>
+                    <Col md={6}>
                         <Form.Group className="mb-3">
                             <Form.Label>Type</Form.Label>
                             <Form.Select
@@ -115,12 +116,15 @@ const ClassificationSetup = ({ onData, data }) => {
                                 required
                             >
                                 {classificationTypes.map(type => (
-                                    <option key={type} value={type}>{type}</option>
+                                    <option key={type.value} value={type.value}>{type.label}</option>
                                 ))}
                             </Form.Select>
                         </Form.Group>
                     </Col>
-                    <Col md={3}>
+                </Row>
+
+                <Row>
+                    <Col md={6}>
                         <Form.Group className="mb-3">
                             <Form.Label>Energy Type</Form.Label>
                             <Form.Select
@@ -135,7 +139,7 @@ const ClassificationSetup = ({ onData, data }) => {
                             </Form.Select>
                         </Form.Group>
                     </Col>
-                    <Col md={3}>
+                    <Col md={6}>
                         <Form.Group className="mb-3">
                             <Form.Label>Measurement Unit</Form.Label>
                             <Form.Select
@@ -144,8 +148,8 @@ const ClassificationSetup = ({ onData, data }) => {
                                 onChange={handleChange}
                                 required
                             >
-                                {unitsByEnergyType[newClassification.energyType]?.map(unit => (
-                                    <option key={unit} value={unit}>{unit}</option>
+                                {measurementUnits[newClassification.energyType]?.map(unit => (
+                                    <option key={unit.value} value={unit.value}>{unit.label}</option>
                                 ))}
                             </Form.Select>
                         </Form.Group>
@@ -188,7 +192,7 @@ const ClassificationSetup = ({ onData, data }) => {
                 </Table>
             ) : (
                 <Alert variant="info" className="mt-3">
-                    No classifications added yet. Add at least one classification to continue.
+                    No classifications defined yet. Add at least one classification to continue.
                 </Alert>
             )}
 
@@ -197,7 +201,8 @@ const ClassificationSetup = ({ onData, data }) => {
                     <Alert.Heading>ISO 50001 Guidelines</Alert.Heading>
                     <p>
                         ISO 50001 requires organizations to identify areas of significant energy use.
-                        Each classification should represent an energy consumer that you want to monitor and improve.
+                        Properly classifying energy consumption areas helps in monitoring, analyzing,
+                        and improving energy performance.
                     </p>
                 </Alert>
             </div>

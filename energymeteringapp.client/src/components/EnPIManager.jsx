@@ -1,14 +1,15 @@
 // src/components/EnPIManager.jsx
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Form, Button, Card, Table, Alert, Row, Col } from 'react-bootstrap';
 import moment from 'moment';
 import Plot from 'react-plotly.js';
+import apiService from '../services/apiService';
 
 const EnPIManager = () => {
     const [classifications, setClassifications] = useState([]);
     const [enpiList, setEnpiList] = useState([]);
     const [alert, setAlert] = useState({ show: false, message: '', variant: '' });
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         formula: 'EnergyPerHour',
@@ -22,27 +23,33 @@ const EnPIManager = () => {
 
     const fetchClassifications = async () => {
         try {
-            const response = await axios.get('/api/classifications');
-            setClassifications(response.data);
-            if (response.data.length > 0) {
+            setLoading(true);
+            const response = await apiService.getClassifications();
+            setClassifications(response);
+            if (response.length > 0) {
                 setFormData(prev => ({
                     ...prev,
-                    classificationId: response.data[0].id
+                    classificationId: response[0].id
                 }));
             }
         } catch (error) {
             console.error('Error fetching classifications:', error);
             showAlert('Failed to load classifications', 'danger');
+        } finally {
+            setLoading(false);
         }
     };
 
     const fetchEnPIs = async () => {
         try {
-            const response = await axios.get('/api/enpi');
-            setEnpiList(response.data);
+            setLoading(true);
+            const response = await apiService.getEnPIs();
+            setEnpiList(response);
         } catch (error) {
             console.error('Error fetching EnPIs:', error);
             showAlert('Failed to load EnPIs', 'danger');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -50,7 +57,6 @@ const EnPIManager = () => {
         fetchClassifications();
         fetchEnPIs();
     }, []);
-        
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -63,19 +69,20 @@ const EnPIManager = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            setLoading(true);
             const payload = {
                 name: formData.name,
                 formula: formData.formula,
-                classificationId: parseInt(formData.classificationId),
+                classificationId: parseInt(formData.classificationId, 10),
                 startDate: new Date(formData.startDate),
                 endDate: new Date(formData.endDate),
                 baselineStartDate: formData.useBaseline ? new Date(formData.baselineStartDate) : null,
                 baselineEndDate: formData.useBaseline ? new Date(formData.baselineEndDate) : null
             };
 
-            await axios.post('/api/enpi/calculate', payload);
+            await apiService.calculateEnPI(payload);
             showAlert('EnPI calculated successfully!', 'success');
-            fetchEnPIs();
+            await fetchEnPIs();
 
             // Reset form
             setFormData(prev => ({
@@ -84,18 +91,23 @@ const EnPIManager = () => {
             }));
         } catch (error) {
             console.error('Error calculating EnPI:', error);
-            showAlert(`Failed to calculate EnPI: ${error.response?.data || error.message}`, 'danger');
+            showAlert(`Failed to calculate EnPI: ${error.message || 'Unknown error'}`, 'danger');
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`/api/enpi/${id}`);
+            setLoading(true);
+            await apiService.deleteEnPI(id);
             showAlert('EnPI deleted successfully', 'success');
-            fetchEnPIs();
+            await fetchEnPIs();
         } catch (error) {
             console.error('Error deleting EnPI:', error);
             showAlert('Failed to delete EnPI', 'danger');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -363,8 +375,12 @@ const EnPIManager = () => {
                             </Row>
                         )}
 
-                        <Button variant="primary" type="submit">
-                            Calculate EnPI
+                        <Button
+                            variant="primary"
+                            type="submit"
+                            disabled={loading}
+                        >
+                            {loading ? 'Calculating...' : 'Calculate EnPI'}
                         </Button>
                     </Form>
                 </Card.Body>
@@ -375,46 +391,53 @@ const EnPIManager = () => {
             <Card>
                 <Card.Body>
                     <Card.Title>EnPI Records</Card.Title>
-                    <Table striped bordered hover responsive>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Classification</th>
-                                <th>Formula</th>
-                                <th>Current Value</th>
-                                <th>Baseline Value</th>
-                                <th>Improvement</th>
-                                <th>Calculation Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {enpiList.map(enpi => (
-                                <tr key={enpi.id}>
-                                    <td>{enpi.name}</td>
-                                    <td>{enpi.classification?.name || 'Unknown'}</td>
-                                    <td>{enpi.formula}</td>
-                                    <td>{enpi.currentValue.toFixed(2)}</td>
-                                    <td>{enpi.baselineValue.toFixed(2)}</td>
-                                    <td>
-                                        {enpi.baselineValue > 0 ?
-                                            `${((enpi.baselineValue - enpi.currentValue) / enpi.baselineValue * 100).toFixed(2)}%` :
-                                            'N/A'}
-                                    </td>
-                                    <td>{moment(enpi.calculationDate).format('YYYY-MM-DD HH:mm')}</td>
-                                    <td>
-                                        <Button
-                                            variant="danger"
-                                            size="sm"
-                                            onClick={() => handleDelete(enpi.id)}
-                                        >
-                                            Delete
-                                        </Button>
-                                    </td>
+                    {enpiList.length === 0 ? (
+                        <Alert variant="info">
+                            No EnPI records found. Use the form above to calculate your first EnPI.
+                        </Alert>
+                    ) : (
+                        <Table striped bordered hover responsive>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Classification</th>
+                                    <th>Formula</th>
+                                    <th>Current Value</th>
+                                    <th>Baseline Value</th>
+                                    <th>Improvement</th>
+                                    <th>Calculation Date</th>
+                                    <th>Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </Table>
+                            </thead>
+                            <tbody>
+                                {enpiList.map(enpi => (
+                                    <tr key={enpi.id}>
+                                        <td>{enpi.name}</td>
+                                        <td>{enpi.classification?.name || 'Unknown'}</td>
+                                        <td>{enpi.formula}</td>
+                                        <td>{enpi.currentValue.toFixed(2)}</td>
+                                        <td>{enpi.baselineValue.toFixed(2)}</td>
+                                        <td>
+                                            {enpi.baselineValue > 0 ?
+                                                `${((enpi.baselineValue - enpi.currentValue) / enpi.baselineValue * 100).toFixed(2)}%` :
+                                                'N/A'}
+                                        </td>
+                                        <td>{moment(enpi.calculationDate).format('YYYY-MM-DD HH:mm')}</td>
+                                        <td>
+                                            <Button
+                                                variant="danger"
+                                                size="sm"
+                                                onClick={() => handleDelete(enpi.id)}
+                                                disabled={loading}
+                                            >
+                                                {loading ? '...' : 'Delete'}
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    )}
                 </Card.Body>
             </Card>
         </div>

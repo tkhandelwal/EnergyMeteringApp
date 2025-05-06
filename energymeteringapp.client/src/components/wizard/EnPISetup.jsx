@@ -1,4 +1,4 @@
-// src/components/wizard/EnPISetup.jsx
+// New file: energymeteringapp.client/src/components/wizard/EnPISetup.jsx
 import React, { useState } from 'react';
 import { Form, Button, Table, Row, Col, Alert } from 'react-bootstrap';
 
@@ -13,24 +13,6 @@ const EnPISetup = ({ onData, data, classifications }) => {
         description: ''
     });
 
-    const formulaTypes = [
-        { value: 'TotalEnergy', label: 'Total Energy Consumption' },
-        { value: 'EnergyPerHour', label: 'Energy per Hour' },
-        { value: 'MaxPower', label: 'Maximum Power Demand' },
-        { value: 'AvgPower', label: 'Average Power Demand' },
-        { value: 'EnergyPerUnit', label: 'Energy per Production Unit' },
-        { value: 'EnergyPerArea', label: 'Energy per Area' }
-    ];
-
-    const normalizationOptions = [
-        { value: 'None', label: 'None' },
-        { value: 'ProductionVolume', label: 'Production Volume' },
-        { value: 'OccupiedHours', label: 'Occupied Hours' },
-        { value: 'DegreeDay', label: 'Degree Days' },
-        { value: 'Area', label: 'Floor Area' },
-        { value: 'Custom', label: 'Custom' }
-    ];
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setNewEnpi({
@@ -42,7 +24,7 @@ const EnPISetup = ({ onData, data, classifications }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!newEnpi.name || !newEnpi.classificationId) {
+        if (!newEnpi.name || !newEnpi.classificationId || !newEnpi.formulaType) {
             return;
         }
 
@@ -67,19 +49,34 @@ const EnPISetup = ({ onData, data, classifications }) => {
         onData(updatedEnpis);
     };
 
-    const getClassificationDetails = (id) => {
+    const formulaTypes = [
+        { value: 'TotalEnergy', label: 'Total Energy' },
+        { value: 'EnergyPerHour', label: 'Energy per Hour' },
+        { value: 'MaxPower', label: 'Maximum Power' },
+        { value: 'AvgPower', label: 'Average Power' }
+    ];
+
+    const normalizationTypes = [
+        { value: 'None', label: 'None' },
+        { value: 'ProductionOutput', label: 'Production Output' },
+        { value: 'HoursOfOperation', label: 'Hours of Operation' },
+        { value: 'FloorArea', label: 'Floor Area' },
+        { value: 'HeatingDegreeDays', label: 'Heating Degree Days' },
+        { value: 'CoolingDegreeDays', label: 'Cooling Degree Days' },
+        { value: 'Occupancy', label: 'Occupancy' }
+    ];
+
+    const getClassificationName = (id) => {
         const classification = classifications.find(c => c.id === id);
-        return classification ?
-            `${classification.name} (${classification.energyType} - ${classification.measurementUnit})` :
-            'Unknown';
+        return classification ? classification.name : 'Unknown';
     };
 
     return (
         <div>
             <h4>Step 3: Define Energy Performance Indicators (EnPIs)</h4>
             <p>
-                Create Energy Performance Indicators to measure and track energy efficiency improvements.
-                EnPIs should be relevant to your organization's energy use and aligned with ISO 50001 requirements.
+                Energy Performance Indicators help measure and monitor energy performance.
+                They can be absolute values or normalized by relevant variables.
             </p>
 
             <Form onSubmit={handleSubmit}>
@@ -92,7 +89,7 @@ const EnPISetup = ({ onData, data, classifications }) => {
                                 name="name"
                                 value={newEnpi.name}
                                 onChange={handleChange}
-                                placeholder="e.g., Building Energy Intensity"
+                                placeholder="e.g., Server Room Energy Intensity"
                                 required
                             />
                         </Form.Group>
@@ -108,7 +105,7 @@ const EnPISetup = ({ onData, data, classifications }) => {
                             >
                                 {classifications.map(classification => (
                                     <option key={classification.id} value={classification.id}>
-                                        {classification.name} ({classification.energyType} - {classification.measurementUnit})
+                                        {classification.name} ({classification.type})
                                     </option>
                                 ))}
                             </Form.Select>
@@ -140,8 +137,8 @@ const EnPISetup = ({ onData, data, classifications }) => {
                                 value={newEnpi.normalizeBy}
                                 onChange={handleChange}
                             >
-                                {normalizationOptions.map(option => (
-                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                {normalizationTypes.map(type => (
+                                    <option key={type.value} value={type.value}>{type.label}</option>
                                 ))}
                             </Form.Select>
                         </Form.Group>
@@ -154,7 +151,7 @@ const EnPISetup = ({ onData, data, classifications }) => {
                                 name="normalizationUnit"
                                 value={newEnpi.normalizationUnit}
                                 onChange={handleChange}
-                                placeholder="e.g., units, m², hours"
+                                placeholder="e.g., kWh/ton, kWh/m²"
                                 disabled={newEnpi.normalizeBy === 'None'}
                             />
                         </Form.Group>
@@ -169,7 +166,7 @@ const EnPISetup = ({ onData, data, classifications }) => {
                         name="description"
                         value={newEnpi.description}
                         onChange={handleChange}
-                        placeholder="Describe how this EnPI will be used to measure energy performance"
+                        placeholder="Description of what this EnPI measures and why it's important"
                     />
                 </Form.Group>
 
@@ -191,11 +188,11 @@ const EnPISetup = ({ onData, data, classifications }) => {
                         {enpiDefinitions.map(enpi => (
                             <tr key={enpi.id}>
                                 <td>{enpi.name}</td>
-                                <td>{getClassificationDetails(enpi.classificationId)}</td>
-                                <td>{formulaTypes.find(f => f.value === enpi.formulaType)?.label}</td>
+                                <td>{getClassificationName(enpi.classificationId)}</td>
+                                <td>{formulaTypes.find(t => t.value === enpi.formulaType)?.label}</td>
                                 <td>
                                     {enpi.normalizeBy !== 'None' ?
-                                        `${normalizationOptions.find(n => n.value === enpi.normalizeBy)?.label} (${enpi.normalizationUnit})` :
+                                        `${normalizationTypes.find(t => t.value === enpi.normalizeBy)?.label} (${enpi.normalizationUnit})` :
                                         'None'}
                                 </td>
                                 <td>
@@ -213,7 +210,7 @@ const EnPISetup = ({ onData, data, classifications }) => {
                 </Table>
             ) : (
                 <Alert variant="info" className="mt-3">
-                    No EnPI definitions added yet. Add at least one EnPI to continue.
+                    No EnPIs defined yet. Add at least one EnPI to continue.
                 </Alert>
             )}
 
@@ -221,9 +218,9 @@ const EnPISetup = ({ onData, data, classifications }) => {
                 <Alert variant="info">
                     <Alert.Heading>ISO 50001 Guidelines</Alert.Heading>
                     <p>
-                        ISO 50001 requires organizations to identify appropriate EnPIs to monitor energy performance.
-                        EnPIs should be regularly reviewed and compared to the energy baseline to track improvements.
-                        Consider both simple metrics (total consumption) and normalized metrics (energy per unit of production).
+                        ISO 50001 requires organizations to establish energy performance indicators (EnPIs)
+                        appropriate for monitoring and measuring energy performance. EnPIs should be reviewed
+                        and compared to the energy baseline as appropriate.
                     </p>
                 </Alert>
             </div>

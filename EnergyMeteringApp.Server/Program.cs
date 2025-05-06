@@ -6,9 +6,15 @@ using Microsoft.Extensions.Configuration;
 using EnergyMeteringApp.Data;
 using Microsoft.Extensions.FileProviders;
 using EnergyMeteringApp.Services;
+using System;
+using System.IO;
 
+Console.WriteLine("Starting Energy Metering Application Server...");
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Log the environment
+Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
 
 if (!Directory.Exists(Path.Combine(builder.Environment.ContentRootPath, "wwwroot")))
 {
@@ -31,16 +37,14 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.WriteIndented = true;
 });
 
-// Configure CORS with null check
+// Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
         policy => {
             policy.WithOrigins(
-                    "https://localhost:53992",
                     "http://localhost:53992",
-                    "http://localhost:5255",
-                    "https://localhost:7177")
+                    "http://localhost:5255")
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
@@ -50,6 +54,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<MeteringService>();
+
+// Print URLs that the application will be listening on
+Console.WriteLine($"Application URLs: {string.Join(", ", builder.WebHost.GetSetting("urls") ?? "Default URLs")}");
 
 var app = builder.Build();
 
@@ -63,33 +70,49 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error");
-    app.UseHsts();
+    // Remove HTTPS redirection
+    // app.UseHsts();
 }
 
 // Ensure database is created
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    context.Database.EnsureCreated();
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        Console.WriteLine("Ensuring database is created...");
+        context.Database.EnsureCreated();
+        Console.WriteLine("Database setup complete.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred while setting up the database: {ex.Message}");
+    }
 }
 
-app.UseHttpsRedirection();
+// Remove HTTPS redirection
+// app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseCors("CorsPolicy");
 
 app.UseRouting();
 
+// Map all controllers - this is essential
 app.MapControllers();
+
+Console.WriteLine("Controllers mapped. Application setup complete.");
 
 // Use SPA proxy in development
 if (app.Environment.IsDevelopment())
 {
     app.UseSpa(spa =>
     {
-        spa.UseProxyToSpaDevelopmentServer("https://localhost:53992"); // This should be 53992
+        spa.UseProxyToSpaDevelopmentServer("http://localhost:53992");
     });
 }
 
+Console.WriteLine("Server starting...");
 app.Run();
+Console.WriteLine("Server stopped.");
