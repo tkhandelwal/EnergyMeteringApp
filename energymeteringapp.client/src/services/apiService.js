@@ -1,159 +1,115 @@
-// Modified apiService.js with improved error handling
+// src/services/apiService.js
 import axios from 'axios';
 
-// Create an axios instance with updated config
+// Configuration with environment-aware base URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7177';
+
 const api = axios.create({
-    timeout: 30000, // Increase timeout to 30 seconds
+    baseURL: API_BASE_URL,
+    timeout: 30000,
     headers: {
         'Content-Type': 'application/json'
     }
 });
 
-// Retry configuration
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000; // 2 seconds
-
-// Helper function to execute API calls with retry logic
-const executeWithRetry = async (apiCall, retries = 0) => {
-    try {
-        return await apiCall();
-    } catch (error) {
-        console.error(`API Error (attempt ${retries + 1}/${MAX_RETRIES + 1}):`, error.message || 'Unknown error');
-
-        if (retries < MAX_RETRIES) {
-            console.log(`API call failed, retrying in ${RETRY_DELAY / 1000}s (${retries + 1}/${MAX_RETRIES})...`);
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-            return executeWithRetry(apiCall, retries + 1);
-        }
-
-        // If we've exhausted retries, throw a friendly error
-        const userFriendlyError = {
-            message: "Could not connect to the server. Please check if the backend is running.",
-            originalError: error
-        };
-        throw userFriendlyError;
+// Add request interceptor for authentication (future use)
+api.interceptors.request.use(config => {
+    // Add auth token if available
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
     }
-};
+    return config;
+});
 
-// Add response interceptor for global error handling
+// Enhanced error handling
 api.interceptors.response.use(
     response => response,
     error => {
         let errorMessage = 'An unknown error occurred';
+
         if (error.response) {
+            // Server responded with an error
             errorMessage = `Server error: ${error.response.status} - ${error.response.data?.message || error.response.statusText}`;
         } else if (error.request) {
-            errorMessage = `No response from server (${error.message}). Please check your connection.`;
+            // No response received
+            errorMessage = 'No response from server. Please check your connection.';
         } else {
+            // Request configuration error
             errorMessage = error.message;
         }
 
-        // Return a rejected promise with structured error
+        console.error('API Error:', errorMessage);
+
         return Promise.reject({
-            originalError: error,
-            message: errorMessage
+            message: errorMessage,
+            originalError: error
         });
     }
 );
 
-// API methods
+// API methods with consistent error handling
 const apiService = {
     // Classifications
     getClassifications: async () => {
-        return executeWithRetry(async () => {
+        try {
             const response = await api.get('/api/classifications');
             return response.data;
-        });
+        } catch (error) {
+            console.error('Error fetching classifications:', error);
+            throw error;
+        }
     },
 
     createClassification: async (classification) => {
-        return executeWithRetry(async () => {
+        try {
             const response = await api.post('/api/classifications', classification);
             return response.data;
-        });
-    },
-
-    deleteClassification: async (id) => {
-        return executeWithRetry(async () => {
-            const response = await api.delete(`/api/classifications/${id}`);
-            return response.data;
-        });
+        } catch (error) {
+            console.error('Error creating classification:', error);
+            throw error;
+        }
     },
 
     // Metering Data
-    getMeteringData: async () => {
-        return executeWithRetry(async () => {
-            const response = await api.get('/api/meteringdata');
+    getMeteringData: async (params = {}) => {
+        try {
+            const response = await api.get('/api/meteringdata', { params });
             return response.data;
-        });
+        } catch (error) {
+            console.error('Error fetching metering data:', error);
+            throw error;
+        }
     },
 
     generateData: async (params) => {
-        return executeWithRetry(async () => {
+        try {
             const response = await api.post('/api/meteringdata/generate', params);
             return response.data;
-        });
+        } catch (error) {
+            console.error('Error generating data:', error);
+            throw error;
+        }
     },
 
     // EnPIs
     getEnPIs: async () => {
-        return executeWithRetry(async () => {
+        try {
             const response = await api.get('/api/enpi');
             return response.data;
-        });
-    },
-
-    calculateEnPI: async (params) => {
-        return executeWithRetry(async () => {
-            const response = await api.post('/api/enpi/calculate', params);
-            return response.data;
-        });
-    },
-
-    deleteEnPI: async (id) => {
-        return executeWithRetry(async () => {
-            const response = await api.delete(`/api/enpi/${id}`);
-            return response.data;
-        });
-    },
-
-    // Fallback methods - use these if the primary API fails
-    fallback: {
-        getClassifications: async () => {
-            return executeWithRetry(async () => {
-                const response = await api.get('/fallback-api/classifications');
-                return response.data;
-            });
-        },
-
-        getMeteringData: async () => {
-            return executeWithRetry(async () => {
-                const response = await api.get('/fallback-api/meteringdata');
-                return response.data;
-            });
-        },
-
-        getEnPIs: async () => {
-            return executeWithRetry(async () => {
-                const response = await api.get('/fallback-api/enpi');
-                return response.data;
-            });
+        } catch (error) {
+            console.error('Error fetching EnPIs:', error);
+            throw error;
         }
     },
 
-    // Health check - useful for system status page
-    checkHealth: async () => {
+    calculateEnPI: async (params) => {
         try {
-            await api.get('/api/classifications');
-            return { status: 'ok', message: 'API is reachable' };
-        } catch (_error) {
-            try {
-                // Try fallback
-                await api.get('/fallback-api/classifications');
-                return { status: 'warning', message: 'Primary API failed, fallback working' };
-            } catch (_fallbackError) {
-                return { status: 'error', message: 'API is unreachable' };
-            }
+            const response = await api.post('/api/enpi/calculate', params);
+            return response.data;
+        } catch (error) {
+            console.error('Error calculating EnPI:', error);
+            throw error;
         }
     }
 };

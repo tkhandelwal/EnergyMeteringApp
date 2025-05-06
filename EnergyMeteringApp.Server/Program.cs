@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using EnergyMeteringApp.Data;
 using Microsoft.Extensions.FileProviders;
+using EnergyMeteringApp.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,6 +49,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<MeteringService>();
 
 var app = builder.Build();
 
